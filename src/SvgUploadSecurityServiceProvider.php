@@ -32,10 +32,16 @@ class SvgUploadSecurityServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'svg-upload-security');
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/svg-upload-security.php' => config_path('svg-upload-security.php'),
             ], 'svg-upload-security-config');
+
+            $this->publishes([
+                __DIR__.'/../lang' => lang_path('vendor/svg-upload-security'),
+            ], 'svg-upload-security-lang');
         }
 
         /** @var Router $router */
