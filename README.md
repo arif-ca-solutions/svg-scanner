@@ -74,7 +74,13 @@ Non-SVG uploads are ignored. SVG uploads that fail checks throw a **`ValidationE
 ## Installation
 
 ```bash
-composer require arif_ca/svg-upload-security
+composer require arif_ca/svg-upload-security:^1.0
+```
+
+Packagist publishes **stable** versions from [Git tags](https://github.com/arif-ca-solutions/svg-scanner/tags) (for example `v1.0.0`). If you need the latest `main` before a release, use:
+
+```bash
+composer require arif_ca/svg-upload-security:1.x-dev
 ```
 
 Laravel auto-discovers `SvgUploadSecurityServiceProvider`. No manual registration is required.
