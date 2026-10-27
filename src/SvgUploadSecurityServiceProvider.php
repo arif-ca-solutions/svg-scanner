@@ -17,8 +17,8 @@ class SvgUploadSecurityServiceProvider extends ServiceProvider
         if (! class_exists(Sanitizer::class)) {
             throw new RuntimeException(
                 'Missing dependency [enshrined/svg-sanitize]. '
-                .'It is required by [arif/svg-upload-security] and should install automatically. '
-                .'Run: composer require arif/svg-upload-security (or composer install).'
+                .'It is required by [arif_ca/svg-upload-security] and should install automatically. '
+                .'Run: composer require arif_ca/svg-upload-security (or composer install).'
             );
         }
 

@@ -1,4 +1,4 @@
-# arif/svg-upload-security
+# arif_ca/svg-upload-security
 
 **Secure SVG file uploads in Laravel** by inspecting every uploaded file on incoming HTTP requests, detecting SVG content (including disguised uploads), and either **sanitizing** malicious markup or **rejecting** files that are not safe.
 
@@ -74,7 +74,7 @@ Non-SVG uploads are ignored. SVG uploads that fail checks throw a **`ValidationE
 ## Installation
 
 ```bash
-composer require arif/svg-upload-security
+composer require arif_ca/svg-upload-security
 ```
 
 Laravel auto-discovers `SvgUploadSecurityServiceProvider`. No manual registration is required.
@@ -83,7 +83,7 @@ Laravel auto-discovers `SvgUploadSecurityServiceProvider`. No manual registratio
 
 ```json
 "repositories": [{ "type": "path", "url": "packages/svg-upload-security" }],
-"require": { "arif/svg-upload-security": "@dev" }
+"require": { "arif_ca/svg-upload-security": "@dev" }
 ```
 
 ### Publish configuration (optional)
