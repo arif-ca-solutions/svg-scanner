@@ -5,17 +5,18 @@ namespace TwoBase\SvgUploadSecurity\Services;
 use enshrined\svgSanitize\Sanitizer;
 use Illuminate\Http\UploadedFile;
 use TwoBase\SvgUploadSecurity\Exceptions\UnsafeSvgUploadException;
+use TwoBase\SvgUploadSecurity\Support\SvgUploadMode;
 
 class SvgUploadProcessor
 {
     public function __construct(
-        protected string $mode = 'sanitize',
+        protected string $mode = SvgUploadMode::BLOCK,
     ) {
     }
 
     public static function fromConfig(): self
     {
-        return new self(config('svg-upload-security.mode', 'sanitize'));
+        return new self(SvgUploadMode::normalize((string) config('svg-upload-security.mode', SvgUploadMode::BLOCK)));
     }
 
     /**
@@ -25,7 +26,10 @@ class SvgUploadProcessor
     {
         $original = file_get_contents($file->getRealPath() ?: $file->getPathname());
         if ($original === false || $original === '') {
-            throw new UnsafeSvgUploadException('Empty or unreadable SVG upload.');
+            throw new UnsafeSvgUploadException(
+                'Empty or unreadable SVG upload.',
+                'svg-upload-security::validation.empty',
+            );
         }
 
         $byMetadata = $this->isSvgCandidate($file);
@@ -36,7 +40,10 @@ class SvgUploadProcessor
         }
 
         if (! $byContent) {
-            throw new UnsafeSvgUploadException('File metadata indicates SVG but content is not valid SVG.');
+            throw new UnsafeSvgUploadException(
+                'File metadata indicates SVG but content is not valid SVG.',
+                'svg-upload-security::validation.invalid',
+            );
         }
 
         $sanitizer = new Sanitizer();
@@ -45,12 +52,18 @@ class SvgUploadProcessor
 
         $clean = $sanitizer->sanitize($original);
         if ($clean === false || trim($clean) === '') {
-            throw new UnsafeSvgUploadException('SVG sanitization produced no safe content.');
+            throw new UnsafeSvgUploadException(
+                'SVG sanitization produced no safe content.',
+                'svg-upload-security::validation.scan_failed',
+            );
         }
 
-        if ($this->mode === 'reject') {
+        if ($this->mode === SvgUploadMode::BLOCK) {
             if (! $this->contentEquivalent($original, $clean)) {
-                throw new UnsafeSvgUploadException('SVG upload contained disallowed content.');
+                throw new UnsafeSvgUploadException(
+                    'SVG upload contained disallowed content.',
+                    'svg-upload-security::validation.unsafe',
+                );
             }
 
             return null;
@@ -105,7 +118,10 @@ class SvgUploadProcessor
     {
         $tmp = tempnam(sys_get_temp_dir(), 'svg_san_');
         if ($tmp === false) {
-            throw new UnsafeSvgUploadException('Could not create temporary file for sanitized SVG.');
+            throw new UnsafeSvgUploadException(
+                'Could not create temporary file for sanitized SVG.',
+                'svg-upload-security::validation.scan_failed',
+            );
         }
 
         file_put_contents($tmp, $cleanContent);

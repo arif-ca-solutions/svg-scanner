@@ -109,10 +109,10 @@ This copies `config/svg-upload-security.php` into your app so you can tune MIME 
 With defaults, the package:
 
 1. Enables middleware globally (`SVG_UPLOAD_SECURITY_GLOBAL_MIDDLEWARE=true`).
-2. Uses **`sanitize`** mode: malicious content is stripped; the request continues with a safe file.
+2. Uses **`block`** mode (default): if security scanning would change the SVG or cannot verify it as safe, the upload **fails with a validation error** on the correct file field.
 3. Sniffs file content for hidden SVG (`SVG_UPLOAD_SECURITY_SNIFF_CONTENT=true`).
 
-No route changes are needed. Any controller, Form Request, or Livewire upload that reads `$request->file(...)` receives already-sanitized SVGs.
+No route changes are needed. Set `SVG_UPLOAD_SECURITY_MODE=sanitize` if you prefer automatic cleaning instead of blocking.
 
 ### Route-only / opt-in middleware
 
@@ -148,10 +148,28 @@ SVG_UPLOAD_SECURITY_ENABLED=false
 
 | Mode | Env value | Behavior | Best for |
 |------|-----------|----------|----------|
-| **Sanitize** | `sanitize` (default) | Run sanitizer; if output differs, **replace** the upload with cleaned SVG | Production apps that must accept user SVG (avatars, CMS, icons) |
-| **Reject** | `reject` | If sanitization **would change** the file, **fail** the request | High-trust or admin-only uploads where any modification indicates an attack |
+| **Block** | `block` (default) | If scanning **would change** the file or cannot produce safe content, **fail** with a localized validation error | Default secure posture; untrusted uploads |
+| **Sanitize** | `sanitize` | If output differs, **replace** the upload with cleaned SVG | Apps that must accept user SVG (avatars, CMS, icons) |
 
-In **reject** mode, byte-identical output (after whitespace normalization) passes without replacing the file.
+Legacy env value **`reject`** is treated as **`block`**. In **block** mode, byte-identical output (after whitespace normalization) passes without replacing the file.
+
+### Localization
+
+Validation messages use Laravel’s translator. Default strings live in `lang/en/svg-upload-security.php` under keys such as `svg-upload-security::validation.scan_failed`.
+
+Publish language files to customize copy:
+
+```bash
+php artisan vendor:publish --tag=svg-upload-security-lang
+```
+
+Then edit `lang/vendor/svg-upload-security/{locale}/svg-upload-security.php`, or add entries to your app’s `lang/{locale}.json`.
+
+Override **all** failure messages with one key or string via config:
+
+```env
+SVG_UPLOAD_SECURITY_VALIDATION_MESSAGE=custom.unsafe_svg
+```
 
 ---
 
@@ -162,7 +180,8 @@ Environment variables map to `config/svg-upload-security.php`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SVG_UPLOAD_SECURITY_ENABLED` | `true` | Master switch for middleware |
-| `SVG_UPLOAD_SECURITY_MODE` | `sanitize` | `sanitize` or `reject` |
+| `SVG_UPLOAD_SECURITY_MODE` | `block` | `block`, `sanitize`, or legacy `reject` |
+| `SVG_UPLOAD_SECURITY_VALIDATION_MESSAGE` | _(empty)_ | Optional single message or translation key for every failure |
 | `SVG_UPLOAD_SECURITY_GLOBAL_MIDDLEWARE` | `true` | Prepend middleware on the HTTP kernel |
 | `SVG_UPLOAD_SECURITY_SNIFF_CONTENT` | `true` | Detect SVG by content, not only MIME/extension |
 | `SVG_UPLOAD_SECURITY_LOG` | `false` | Log rejections to a Laravel log channel |
@@ -174,13 +193,13 @@ Config file options (after publish):
 |-----|---------|
 | `mime_types` | Server/client MIME types treated as SVG (default: `image/svg+xml`, `image/svg`) |
 | `extensions` | Extensions treated as SVG (default: `svg`, `svgz`) |
-| `validation_message` | Message shown when an upload is rejected |
+| `validation_message` | Optional override (translation key or string) for all validation failures |
 | `logging.enabled` / `logging.channel` | Structured warning log entry `svg_upload_rejected` with IP, user, path, reason |
 
 Example `.env` for a strict admin portal:
 
 ```env
-SVG_UPLOAD_SECURITY_MODE=reject
+SVG_UPLOAD_SECURITY_MODE=block
 SVG_UPLOAD_SECURITY_LOG=true
 SVG_UPLOAD_SECURITY_LOG_CHANNEL=security
 ```
@@ -260,7 +279,7 @@ Understanding these boundaries helps you design a complete upload strategy:
 ## Recommended practices alongside this package
 
 1. **Keep SVG uploads off by default** unless the product truly needs them; use PNG/WebP for untrusted users.
-2. **Use `reject` mode** for small admin-only surfaces; use **`sanitize`** for public-facing uploads.
+2. **Keep `block` as default**; use **`sanitize`** only when the product must accept imperfect SVG from untrusted users.
 3. **Store on a separate domain or path** (cookieless asset host) to reduce impact if a bypass ever occurs.
 4. **Do not rely on extension alone** — leave content sniffing enabled in production.
 5. **Monitor** rejection logs for spikes (automated probing).

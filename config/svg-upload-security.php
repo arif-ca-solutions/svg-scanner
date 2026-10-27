@@ -11,14 +11,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Mode: sanitize | reject
+    | Mode: block | sanitize
     |--------------------------------------------------------------------------
     |
-    | sanitize — replace upload with library-cleaned SVG (default).
-    | reject   — fail if cleaned output differs from input (audit doc approach).
+    | block    — reject upload with a validation error when security scanning
+    |            would change the file or cannot produce safe content (default).
+    | sanitize — replace upload with library-cleaned SVG.
+    |
+    | Legacy: "reject" is treated as "block".
     |
     */
-    'mode' => env('SVG_UPLOAD_SECURITY_MODE', 'sanitize'),
+    'mode' => env('SVG_UPLOAD_SECURITY_MODE', 'block'),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,6 +65,16 @@ return [
     */
     'register_global_middleware' => env('SVG_UPLOAD_SECURITY_GLOBAL_MIDDLEWARE', true),
 
-    'validation_message' => 'The uploaded SVG file is not allowed.',
+    /*
+    |--------------------------------------------------------------------------
+    | Validation message (localization)
+    |--------------------------------------------------------------------------
+    |
+    | Leave null to use reason-specific keys from lang/{locale}/svg-upload-security.php
+    | (namespace svg-upload-security::validation.*). Set a string to override all
+    | failures with one message or translation key, e.g. "custom.unsafe_svg".
+    |
+    */
+    'validation_message' => env('SVG_UPLOAD_SECURITY_VALIDATION_MESSAGE'),
 
 ];

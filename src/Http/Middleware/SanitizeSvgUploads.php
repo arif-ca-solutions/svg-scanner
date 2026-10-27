@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use TwoBase\SvgUploadSecurity\Exceptions\UnsafeSvgUploadException;
 use TwoBase\SvgUploadSecurity\Services\SvgUploadProcessor;
 use TwoBase\SvgUploadSecurity\Support\RequestFileTree;
+use TwoBase\SvgUploadSecurity\Support\ValidationMessageResolver;
 
 class SanitizeSvgUploads
 {
@@ -30,30 +31,26 @@ class SanitizeSvgUploads
 
         try {
             RequestFileTree::walk($request, function ($file, $path) use ($request): void {
-                $replacement = $this->processor->processUploadedFile($file);
-                if ($replacement !== null) {
-                    RequestFileTree::setAtPath($request, $path, $replacement);
+                try {
+                    $replacement = $this->processor->processUploadedFile($file);
+                    if ($replacement !== null) {
+                        RequestFileTree::setAtPath($request, $path, $replacement);
+                    }
+                } catch (UnsafeSvgUploadException $e) {
+                    $this->logRejection($request, $e->getMessage());
+
+                    throw ValidationException::withMessages([
+                        $path => [
+                            ValidationMessageResolver::resolve($e),
+                        ],
+                    ]);
                 }
             });
-        } catch (UnsafeSvgUploadException $e) {
-            $this->logRejection($request, $e->getMessage());
-
-            throw ValidationException::withMessages([
-                $this->validationKey($request) => [
-                    config('svg-upload-security.validation_message')
-                        ?? 'The uploaded SVG file is not allowed.',
-                ],
-            ]);
+        } catch (ValidationException $e) {
+            throw $e;
         }
 
         return $next($request);
-    }
-
-    protected function validationKey(Request $request): string
-    {
-        $keys = array_keys($request->files->all());
-
-        return $keys[0] ?? 'file';
     }
 
     protected function logRejection(Request $request, string $reason): void
