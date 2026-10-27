@@ -1,4 +1,4 @@
-# 2base/svg-upload-security
+# arif/svg-upload-security
 
 Reusable Laravel middleware that sanitizes SVG uploads before controllers run.
 
@@ -11,7 +11,7 @@ Minimum version: **1.1.1** (declared in this package’s `require`).
 ## Install (any Laravel app)
 
 ```bash
-composer require 2base/svg-upload-security
+composer require arif/svg-upload-security
 ```
 
 That single command pulls in `enshrined/svg-sanitize` as a transitive dependency.
@@ -20,7 +20,7 @@ Or path repository during development:
 
 ```json
 "repositories": [{ "type": "path", "url": "packages/svg-upload-security" }],
-"require": { "2base/svg-upload-security": "@dev" }
+"require": { "arif/svg-upload-security": "@dev" }
 ```
 
 Publish config (optional):

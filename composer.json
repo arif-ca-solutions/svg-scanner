@@ -1,5 +1,5 @@
 {
-    "name": "2base/svg-upload-security",
+    "name": "arif/svg-upload-security",
     "description": "Laravel middleware to inspect and sanitize SVG uploads (requires enshrined/svg-sanitize; installed automatically via Composer)",
     "type": "library",
     "license": "MIT",
